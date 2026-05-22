@@ -1,0 +1,1961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Derm SRS Planner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400&family=Source+Code+Pro:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg-base:        #f0ece4;
+    --bg-surface:     #f7f4ef;
+    --bg-raised:      #ede9e1;
+    --bg-card:        #e8e4db;
+    --bg-hover:       #e2ddd4;
+    --border:         #cec9be;
+    --border-subtle:  #d8d3c8;
+    --text-primary:   #000000;
+    --text-secondary: #111111;
+    --text-muted:     #3a3530;
+    --teal:           #cc8200;
+    --teal-dim:       #fdf0da;
+    --teal-mid:       #f0d090;
+    --blue:           #5a6e8a;
+    --blue-dim:       #e8ecf2;
+    --amber:          #8a5c00;
+    --amber-dim:      #fbefd8;
+    --amber-border:   #ddb86a;
+    --red-soft:       #a03030;
+    --red-dim:        #fce8e8;
+    --red-border:     #d89090;
+    --yellow-soft:    #7a6010;
+    --yellow-dim:     #faf4d8;
+    --yellow-border:  #d8c860;
+    --green-soft:     #1e6640;
+    --green-dim:      #e0f0e8;
+    --green-border:   #7ac098;
+    --gray-ind:       #a8a096;
+    --radius-sm:      4px;
+    --radius:         7px;
+    --radius-lg:      10px;
+    --font-ui:        'Lato', 'Calibri', 'Trebuchet MS', sans-serif;
+    --font-mono:      'Source Code Pro', 'Consolas', monospace;
+    --shadow-sm:      0 1px 3px rgba(0,0,0,0.06);
+    --shadow:         0 2px 8px rgba(0,0,0,0.08);
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 16px;
+    line-height: 1.65;
+    font-weight: 400;
+  }
+  * { -webkit-font-smoothing: antialiased; }
+
+  /* ── scrollbars ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg-raised); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── layout ── */
+  #app { display: flex; flex-direction: column; min-height: 100vh; }
+
+  header {
+    background: var(--bg-surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+  }
+
+  .app-title {
+    font-size: 13px;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+    padding: 16px 0;
+    font-family: var(--font-mono);
+    font-weight: 500;
+  }
+
+  .tab-nav {
+    display: flex;
+    gap: 0;
+    flex: 1;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    padding: 18px 20px 16px;
+    transition: color 0.18s, border-color 0.18s;
+    white-space: nowrap;
+    font-weight: 400;
+  }
+  .tab-btn:hover { color: var(--text-primary); }
+  .tab-btn.active {
+    color: var(--teal);
+    border-bottom-color: var(--teal);
+  }
+
+  .streak-badge {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--amber);
+    background: var(--amber-dim);
+    font-weight: 500;
+    border: 1px solid var(--amber-border);
+    border-radius: var(--radius-sm);
+    padding: 3px 10px;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+  }
+
+  .tab-panel { display: none; flex: 1; padding: 24px; overflow-y: auto; }
+  .tab-panel.active { display: block; }
+
+  /* ── section headers ── */
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    font-weight: 500;
+  }
+
+  /* ── cards ── */
+  .card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 18px 20px;
+    margin-bottom: 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  /* ── buttons ── */
+  button {
+    font-family: var(--font-ui);
+    font-weight: 400;
+    cursor: pointer;
+    border: none;
+    outline: none;
+    transition: background 0.15s, color 0.15s, opacity 0.15s;
+  }
+
+  .btn-primary {
+    background: var(--teal-dim);
+    color: var(--teal);
+    border: 1px solid var(--teal-mid);
+    border-radius: var(--radius-sm);
+    padding: 7px 17px;
+    font-size: 14.5px;
+    letter-spacing: 0.02em;
+  }
+  .btn-primary:hover { background: var(--teal); color: #fff; border-color: var(--teal); }
+
+  .btn-secondary {
+    background: var(--bg-raised);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 18px;
+    font-size: 14.5px;
+  }
+  .btn-secondary:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+  .btn-ghost {
+    background: none;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 5px 12px;
+    font-size: 13.5px;
+  }
+  .btn-ghost:hover { color: var(--text-primary); border-color: var(--text-muted); }
+
+  .btn-danger {
+    background: var(--red-dim);
+    color: var(--red-soft);
+    border: 1px solid var(--red-border);
+    border-radius: var(--radius-sm);
+    padding: 7px 17px;
+    font-size: 14.5px;
+  }
+  .btn-danger:hover { background: var(--red-soft); color: #fff; }
+
+  .btn-amber {
+    background: var(--amber-dim);
+    color: var(--amber);
+    border: 1px solid var(--amber-border);
+    border-radius: var(--radius-sm);
+    padding: 7px 17px;
+    font-size: 14.5px;
+  }
+  .btn-amber:hover { background: var(--amber); color: #fff; }
+
+  /* ── form controls ── */
+  input, select, textarea {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 14.5px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.13s, box-shadow 0.13s;
+    font-weight: 400;
+  }
+  input:focus, select:focus, textarea:focus {
+    border-color: var(--teal);
+    box-shadow: 0 0 0 2px rgba(42,140,122,0.10);
+  }
+  select option { background: var(--bg-surface); color: var(--text-primary); }
+  textarea { resize: vertical; font-family: var(--font-mono); font-size: 14px; line-height: 1.75; }
+
+  /* ── recall indicators ── */
+  .ind {
+    display: inline-block;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ind-blank  { background: var(--gray-ind); }
+  .ind-poor   { background: #d46060; }
+  .ind-ok     { background: #c8b040; }
+  .ind-good   { background: #3ea86a; }
+
+  /* ════════════════════════════
+     TAB 1 — PROGRESS TRACKER
+  ════════════════════════════ */
+  .progress-map { display: flex; flex-direction: column; gap: 10px; }
+
+  .parent-group {}
+  .parent-header {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--teal);
+    padding: 5px 0 4px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+    margin-bottom: 5px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .parent-header::before { content: '▸'; font-size: 8px; color: var(--teal); transition: transform 0.16s; }
+  .parent-header.open::before { transform: rotate(90deg); }
+
+  .sub-group { margin-left: 12px; margin-bottom: 6px; }
+  .sub-header {
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 3px 0 3px 10px;
+    border-left: 2px solid var(--border);
+    margin-bottom: 4px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .sub-header::before {
+    content: '▸';
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: transform 0.18s;
+  }
+  .sub-header.open::before { transform: rotate(90deg); }
+
+  .topic-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-left: 16px;
+    margin-bottom: 6px;
+  }
+
+  .topic-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 10px 3px 7px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    transition: border-color 0.15s;
+  }
+  .topic-chip:hover { border-color: var(--teal-dim); }
+
+  /* ════════════════════════════
+     TIME SELECTOR
+  ════════════════════════════ */
+  .time-btns {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  .time-btn {
+    background: var(--bg-raised);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 22px;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    transition: all 0.15s;
+  }
+  .time-btn:hover { background: var(--bg-hover); color: var(--teal); border-color: var(--teal-dim); }
+  .time-btn.selected { background: var(--teal-dim); color: var(--teal); border-color: var(--teal-dim); }
+
+  .session-output {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    min-height: 56px;
+  }
+  .session-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 14px;
+    color: var(--text-primary);
+  }
+  .session-item:last-child { border-bottom: none; }
+  .session-num {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-muted);
+    margin-top: 2px;
+    min-width: 18px;
+  }
+  .session-detail { flex: 1; }
+  .session-topic { color: var(--text-primary); font-size: 15px; font-weight: 500; }
+  .session-meta { font-size: 13px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px; }
+  .session-badge {
+    font-size: 12.5px;
+    font-family: var(--font-mono);
+    padding: 2px 9px;
+    border-radius: 20px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .badge-poor   { color: var(--red-soft);    border-color: var(--red-border);    background: var(--red-dim); }
+  .badge-ok     { color: var(--yellow-soft); border-color: var(--yellow-border); background: var(--yellow-dim); }
+  .badge-good   { color: var(--green-soft);  border-color: var(--green-border);  background: var(--green-dim); }
+  .badge-unseen { color: var(--text-muted);  border-color: var(--border);        background: var(--bg-card); }
+  .badge-high   { color: var(--teal);        border-color: var(--teal-mid);      background: var(--teal-dim); }
+
+  /* ════════════════════════════
+     FLASHCARDS
+  ════════════════════════════ */
+  #flashcard-area { margin-top: 8px; }
+  .fc-card {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px 36px;
+    margin-bottom: 14px;
+  }
+  .fc-counter {
+    font-family: var(--font-mono);
+    font-size: 13.5px;
+    color: var(--text-muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 14px;
+  }
+  .fc-section-tag {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--blue);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    opacity: 0.8;
+  }
+  .fc-question {
+    font-size: 17px;
+    color: var(--text-primary);
+    font-weight: 500;
+    line-height: 1.75;
+    margin-bottom: 16px;
+    font-family: var(--font-mono);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .fc-answer {
+    background: var(--bg-card);
+    border-left: 2px solid var(--teal-mid);
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    padding: 14px 16px;
+    margin-top: 12px;
+    font-size: 16px;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    white-space: pre-wrap;
+    word-break: break-word;
+    line-height: 1.7;
+    display: none;
+  }
+  .fc-answer.visible { display: block; }
+  .fc-controls { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .fc-progress-bar {
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .fc-progress-fill {
+    height: 100%;
+    background: var(--teal);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+  }
+
+  /* ════════════════════════════
+     TAB 2 — DATA ENTRY
+  ════════════════════════════ */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 800px) { .two-col { grid-template-columns: 1fr; } }
+
+  .stopwatch-display {
+    font-family: var(--font-mono);
+    font-size: 38px;
+    color: var(--teal);
+    letter-spacing: 0.06em;
+    text-align: center;
+    padding: 20px 0 16px;
+  }
+  .sw-controls { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+
+  .form-row { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+  .form-row label { font-size: 12.5px; font-family: var(--font-mono); color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; }
+  .form-row input, .form-row select { width: 100%; }
+
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .metric-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    text-align: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+  .metric-val {
+    font-family: var(--font-mono);
+    font-size: 30px;
+    color: var(--teal);
+    line-height: 1.2;
+  }
+  .metric-label {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    letter-spacing: 0.08em;
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  .timeline-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 14px;
+  }
+  .timeline-time {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--text-muted);
+    min-width: 60px;
+    margin-top: 1px;
+  }
+  .timeline-detail { color: var(--000000); flex: 1; font-weight: 500; }
+  .timeline-mins {
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    color: var(--blue);
+    white-space: nowrap;
+  }
+
+  /* sparkline chart */
+  .sparkline-wrap {
+    margin-top: 8px;
+    overflow-x: auto;
+  }
+  .sparkline-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    height: 60px;
+    padding-bottom: 0;
+  }
+  .spark-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex: 1; }
+  .spark-bar {
+    background: var(--teal-mid);
+    border-radius: 2px 2px 0 0;
+    width: 100%;
+    min-height: 2px;
+    transition: height 0.3s;
+    position: relative;
+  }
+  .spark-bar:hover { background: var(--teal); }
+  .spark-label { font-family: var(--font-mono); font-size: 10.5px; color: var(--text-muted); }
+
+  /* ════════════════════════════
+     TAB 3 — DATABASE GRID
+  ════════════════════════════ */
+  .db-controls { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    background: var(--bg-raised);
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: top;
+    color: var(--text-primary);
+    font-weight: 400;
+  }
+  tr:hover td { background: var(--bg-raised); }
+  td input, td select {
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed var(--border);
+    border-radius: 0;
+    padding: 3px 4px;
+    font-size: 14.5px;
+    color: var(--text-secondary);
+    width: 100%;
+  }
+  td input:focus, td select:focus {
+    border-bottom: 1px solid var(--teal);
+    background: var(--teal-dim);
+    box-shadow: none;
+  }
+
+  /* sub-topic tags */
+  .subtopic-list { display: flex; flex-wrap: wrap; gap: 4px; }
+  .subtopic-tag {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 2px 8px 2px 9px;
+    font-size: 13.5px;
+    color: var(--text-primary);
+    transition: border-color 0.12s;
+  }
+  .subtopic-tag:hover { border-color: var(--teal-mid); }
+  .subtopic-del {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 13.5px;
+    cursor: pointer;
+    padding: 0 2px;
+    line-height: 1;
+    transition: color 0.12s;
+  }
+  .subtopic-del:hover { color: var(--red-soft); }
+  .subtopic-add {
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: 20px;
+    color: var(--text-muted);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 3px 9px;
+    font-family: var(--font-ui);
+    transition: all 0.12s;
+  }
+  .subtopic-add:hover { border-color: var(--teal-mid); color: var(--teal); }
+
+  /* recall level select coloring */
+  .recall-select { font-family: var(--font-mono); font-size: 13px; }
+  .recall-select.poor   { color: var(--red-soft); }
+  .recall-select.ok     { color: var(--yellow-soft); }
+  .recall-select.good   { color: var(--green-soft); }
+  .recall-select.blank  { color: var(--text-muted); }
+
+  /* yield select */
+  .yield-select { font-family: var(--font-mono); font-size: 13px; }
+
+
+  /* ── row move buttons ── */
+  .btn-move {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-muted);
+    font-size: 13px;
+    padding: 2px 6px;
+    line-height: 1.4;
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s, border-color 0.12s;
+    display: block;
+    width: 100%;
+    margin-bottom: 2px;
+    text-align: center;
+    font-family: var(--font-ui);
+    font-weight: 400;
+  }
+  .btn-move:hover { background: var(--teal-dim); color: var(--teal); border-color: var(--teal-mid); }
+  .btn-move:disabled { opacity: 0.22; cursor: default; pointer-events: none; }
+  .move-cell { width: 34px; text-align: center; vertical-align: middle; padding: 4px 3px; }
+
+  /* ════════════════════════════
+     MODAL
+  ════════════════════════════ */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(20,28,40,0.35);
+    backdrop-filter: blur(3px);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 26px;
+    max-width: 460px;
+    width: 90%;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+  }
+  .modal-title {
+    font-size: 15.5px;
+    color: var(--red-soft);
+    margin-bottom: 14px;
+    font-family: var(--font-mono);
+    letter-spacing: 0.04em;
+  }
+  .modal-body { font-size: 14.5px; color: var(--text-secondary); line-height: 1.65; margin-bottom: 18px; }
+  .modal-option {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .modal-option:hover { border-color: var(--teal-dim); }
+  .modal-option.selected { border-color: var(--teal); background: var(--teal-dim); }
+  .modal-opt-label { font-size: 12.5px; font-family: var(--font-mono); color: var(--teal); letter-spacing: 0.06em; margin-bottom: 5px; }
+  .modal-opt-desc { font-size: 14px; color: var(--text-secondary); }
+  .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
+
+  /* misc utility */
+  .flex-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .mt-8  { margin-top: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mt-16 { margin-top: 16px; }
+  .mt-20 { margin-top: 20px; }
+  .empty-state {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    letter-spacing: 0.06em;
+  }
+
+  /* export/import */
+  .export-row { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+
+  /* Collapsible content */
+  .collapsible-content { overflow: hidden; transition: max-height 0.25s ease; }
+  .collapsible-content.collapsed { max-height: 0; }
+  .collapsible-content.expanded  { max-height: 2000px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="backup-banner" style="display:none; background:#fdf0da; border-bottom:1px solid #ddb86a; color:#6b3d00; font-family:var(--font-ui); font-size:14px; padding:10px 24px; text-align:center; position:sticky; top:0; z-index:200; letter-spacing:0.01em;">
+    Reminder — export a JSON backup of your study data. Last backup was over 2 weeks ago.
+    <button onclick="dismissBanner()" style="margin-left:16px; background:none; border:1px solid #ddb86a; border-radius:4px; color:#6b3d00; font-size:13px; padding:3px 12px; cursor:pointer; font-family:var(--font-ui);">Dismiss</button>
+  </div>
+  <header>
+    <span class="app-title">Derm · SRS Planner</span>
+    <nav class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab(0)">Current Study View</button>
+      <button class="tab-btn"        onclick="switchTab(1)">Today's Data Entry</button>
+      <button class="tab-btn"        onclick="switchTab(2)">Study Tracker Database</button>
+    </nav>
+    <span class="streak-badge" id="streak-badge">— streak</span>
+  </header>
+
+  <!-- ═══ TAB 1 ═══ -->
+  <div class="tab-panel active" id="tab0">
+
+    <div class="card">
+      <div class="section-label">Curriculum Progress Map</div>
+      <div class="progress-map" id="progress-map">
+        <div class="empty-state">Loading curriculum…</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Session Generator</div>
+      <div class="time-btns">
+        <button class="time-btn" onclick="runSessionAlgo('long')">60+ Min Session</button>
+        <button class="time-btn" onclick="runSessionAlgo('mid')">25–60 Min Session</button>
+        <button class="time-btn" onclick="runSessionAlgo('short')">&lt;25 Min Session</button>
+      </div>
+      <div class="session-output" id="session-output">
+        <div class="empty-state">Select a session duration to generate a study plan.</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-label">Flashcard Deck</div>
+      <textarea id="fc-input" rows="10"
+        placeholder="Paste your Q&A text here.&#10;&#10;Format: Section headers (ALL CAPS), then questions starting with 'Q. ' and answers following the (N marks) marker on the same block.&#10;&#10;Example:&#10;EPIDEMIOLOGY&#10;Q. What is the prevalence? (2 marks) Children: ~10–30% Adults: ~2–10%"></textarea>
+      <div class="flex-row mt-12">
+        <button class="btn-primary" onclick="initDeck()">Initialize Flashcard Deck</button>
+        <button class="btn-ghost" onclick="clearDeck()">Clear Deck</button>
+      </div>
+      <div id="flashcard-area" class="mt-16"></div>
+    </div>
+
+  </div>
+
+  <!-- ═══ TAB 2 ═══ -->
+  <div class="tab-panel" id="tab1">
+
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-val" id="metric-mins">0</div>
+        <div class="metric-label">mins today</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val" id="metric-hours">0.0</div>
+        <div class="metric-label">hours today</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-val" id="metric-blocks">0</div>
+        <div class="metric-label">blocks logged</div>
+      </div>
+    </div>
+
+    <div class="two-col">
+      <!-- left: stopwatch + form -->
+      <div class="card">
+        <div class="section-label">Stopwatch</div>
+        <div class="stopwatch-display" id="sw-display">00:00:00</div>
+        <div class="sw-controls">
+          <button class="btn-primary" id="sw-start" onclick="swStart()">Start</button>
+          <button class="btn-ghost"   id="sw-pause" onclick="swPause()" disabled>Pause</button>
+          <button class="btn-ghost"   onclick="swReset()">Reset</button>
+          <button class="btn-secondary" onclick="swPopulate()">→ Use Time</button>
+        </div>
+
+        <div class="mt-20">
+          <div class="section-label">Log Study Block</div>
+
+          <div class="form-row">
+            <label>Topic</label>
+            <select id="log-topic" onchange="populateSubTopics()">
+              <option value="">— select topic —</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label>Sub-Topic</label>
+            <select id="log-subtopic">
+              <option value="">— select sub-topic —</option>
+            </select>
+          </div>
+
+          <div class="form-row">
+            <label>Minutes Studied</label>
+            <input type="number" id="log-mins" placeholder="e.g. 30" min="1" max="300">
+          </div>
+
+          <div class="form-row">
+            <label>Recall Level</label>
+            <select id="log-recall">
+              <option value="">— select —</option>
+              <option value="Poor">Poor</option>
+              <option value="OK">OK</option>
+              <option value="Good">Good</option>
+            </select>
+          </div>
+
+          <button class="btn-primary" style="width:100%; margin-top:6px;" onclick="logBlock()">Log Study Block</button>
+        </div>
+      </div>
+
+      <!-- right: timeline + sparkline -->
+      <div class="card">
+        <div class="section-label">Daily Timeline</div>
+        <div id="timeline-list">
+          <div class="empty-state">No blocks logged today.</div>
+        </div>
+
+        <div class="section-label mt-20">14-Day Activity (mins/day)</div>
+        <div class="sparkline-wrap">
+          <div class="sparkline-bars" id="sparkline-bars">
+          </div>
+          <div class="sparkline-bars" id="sparkline-labels" style="height:16px; margin-top:2px;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══ TAB 3 ═══ -->
+  <div class="tab-panel" id="tab2">
+    <div class="db-controls">
+      <button class="btn-primary" onclick="addRow()">Add New Row</button>
+      <button class="btn-amber"   onclick="saveData()">Save &amp; Commit</button>
+      <span id="save-status" style="font-family:var(--font-mono);font-size:13px;color:var(--text-muted);"></span>
+      <div style="margin-left:auto; display:flex; gap:8px;">
+        <button class="btn-ghost" onclick="exportJSON()">Export JSON</button>
+        <label class="btn-ghost" style="cursor:pointer; padding:5px 12px; font-size:12px; border:1px solid var(--border); border-radius:var(--radius-sm); color:var(--text-muted);">
+          Import JSON<input type="file" accept=".json" style="display:none" onchange="importJSON(event)">
+        </label>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="db-table">
+        <thead>
+          <tr>
+            <th style="width:36px;"></th>
+            <th style="width:136px;">Parent Category</th>
+            <th style="width:136px;">Subcategory</th>
+            <th>Sub-Topic Units</th>
+            <th style="width:128px;">Last Recall</th>
+            <th style="width:88px;">Recall Level</th>
+            <th style="width:78px;">Exam Yield</th>
+            <th style="width:38px;"></th>
+          </tr>
+        </thead>
+        <tbody id="db-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal-box">
+    <div class="modal-title">Delete Sub-Topic</div>
+    <div class="modal-body" id="modal-body">You are about to delete this sub-topic. All logged recall data will be permanently lost.</div>
+
+    <div class="modal-option" id="modal-opt-a" onclick="modalSelectOpt('A')">
+      <div class="modal-opt-label">Option A</div>
+      <div class="modal-opt-desc">Delete permanently. All logged recall dates and history for this sub-topic will be lost.</div>
+    </div>
+
+    <div class="modal-option" id="modal-opt-b" onclick="modalSelectOpt('B')">
+      <div class="modal-opt-label">Option B — Merge History</div>
+      <div class="modal-opt-desc">Move all logged dates and history into another sub-topic before deleting.</div>
+      <select id="modal-merge-target" style="margin-top:10px; width:100%; display:none;"
+              onclick="event.stopPropagation()">
+        <option value="">— select destination —</option>
+      </select>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-danger" onclick="confirmDelete()">Confirm Delete</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════
+let db = [];  // array of row objects
+let todayLog = [];  // [{time, topic, subtopic, mins, recall}]
+let dailyHistory = {}; // {YYYY-MM-DD: totalMins}
+let flashDeck = [];
+let flashIdx  = 0;
+let fcAnswerShown = false;
+
+const STORAGE_KEY   = 'derm_srs_db_v2';
+const TODAY_KEY     = 'derm_srs_today_v2';
+const HISTORY_KEY   = 'derm_srs_history_v2';
+const STREAK_KEY    = 'derm_srs_streak_v2';
+
+// Stopwatch
+let swRunning = false;
+let swStartTime = 0;
+let swAccum = 0;
+let swInterval = null;
+
+// Modal state
+let modalRowIdx  = null;
+let modalStIdx   = null;
+let modalOptSel  = null;
+
+// ════════════════════════════════════════════════════════
+//  DEFAULT DATA
+// ════════════════════════════════════════════════════════
+const DEFAULT_DB = [
+  {
+    parent: 'FOUNDATIONS',
+    sub: 'Structure & barrier',
+    topic: 'Anatomy',
+    subtopics: [{ name: 'Core features', lastRecall: '', recall: '', mins: 0 }],
+    yield: 'High'
+  },
+  {
+    parent: 'DISEASES — REACTION PATTERNS',
+    sub: 'Eczematous',
+    topic: 'Atopic dermatitis',
+    subtopics: [
+      { name: 'Pathophysiology',    lastRecall: '', recall: '', mins: 0 },
+      { name: 'Clinical Presentation', lastRecall: '', recall: '', mins: 0 },
+      { name: 'Investigations',     lastRecall: '', recall: '', mins: 0 },
+      { name: 'Treatment',          lastRecall: '', recall: '', mins: 0 }
+    ],
+    yield: 'High'
+  },
+  {
+    parent: 'DISEASES — REACTION PATTERNS',
+    sub: 'Eczematous',
+    topic: 'Irritant contact dermatitis',
+    subtopics: [
+      { name: 'Pathophysiology',    lastRecall: '', recall: '', mins: 0 },
+      { name: 'Clinical Presentation', lastRecall: '', recall: '', mins: 0 },
+      { name: 'Treatment',          lastRecall: '', recall: '', mins: 0 }
+    ],
+    yield: 'High'
+  },
+  {
+    parent: 'DRUGS',
+    sub: 'Systemic Immunomodulators',
+    topic: 'Hydroxychloroquine',
+    subtopics: [{ name: 'Core features', lastRecall: '30th Apr 2026', recall: 'OK', mins: 0 }],
+    yield: 'High'
+  }
+];
+
+// ════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════
+function init() {
+  loadData();
+  renderDB();
+  renderProgressMap();
+  populateTopicDropdown();
+  renderTimeline();
+  renderSparkline();
+  renderStreakBadge();
+  checkDayRollover();
+}
+
+function checkDayRollover() {
+  const today = todayStr();
+  const stored = localStorage.getItem('derm_srs_last_day');
+  if (stored !== today) {
+    // Save yesterday's total to history
+    if (stored && todayLog.length) {
+      const mins = todayLog.reduce((a, b) => a + (b.mins || 0), 0);
+      dailyHistory[stored] = (dailyHistory[stored] || 0) + mins;
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(dailyHistory));
+    }
+    todayLog = [];
+    localStorage.setItem(TODAY_KEY, JSON.stringify(todayLog));
+    localStorage.setItem('derm_srs_last_day', today);
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  PERSISTENCE
+// ════════════════════════════════════════════════════════
+function loadData() {
+  const raw = localStorage.getItem(STORAGE_KEY);
+  db = raw ? JSON.parse(raw) : JSON.parse(JSON.stringify(DEFAULT_DB));
+
+  const t = localStorage.getItem(TODAY_KEY);
+  todayLog = t ? JSON.parse(t) : [];
+
+  const h = localStorage.getItem(HISTORY_KEY);
+  dailyHistory = h ? JSON.parse(h) : {};
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+  localStorage.setItem(TODAY_KEY, JSON.stringify(todayLog));
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(dailyHistory));
+  const s = document.getElementById('save-status');
+  s.textContent = 'saved ' + new Date().toLocaleTimeString();
+  setTimeout(() => { s.textContent = ''; }, 2500);
+}
+
+function exportJSON() {
+  const blob = new Blob([JSON.stringify({ db, todayLog, dailyHistory }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'derm_srs_backup_' + todayStr() + '.json';
+  a.click();
+}
+
+function importJSON(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const obj = JSON.parse(ev.target.result);
+      if (obj.db)           db           = obj.db;
+      if (obj.todayLog)     todayLog     = obj.todayLog;
+      if (obj.dailyHistory) dailyHistory = obj.dailyHistory;
+      saveData();
+      renderAll();
+      alert('Import successful.');
+    } catch(err) { alert('Invalid JSON file.'); }
+  };
+  reader.readAsText(file);
+  e.target.value = '';
+}
+
+// ════════════════════════════════════════════════════════
+//  TAB SWITCHING
+// ════════════════════════════════════════════════════════
+function switchTab(n) {
+  document.querySelectorAll('.tab-panel').forEach((p,i) => {
+    p.classList.toggle('active', i === n);
+  });
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', i === n);
+  });
+  if (n === 1) { populateTopicDropdown(); renderTimeline(); renderSparkline(); }
+  if (n === 0) { renderProgressMap(); }
+}
+
+// ════════════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════════════
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function fmtTime(d) {
+  return d.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+function parseDateStr(str) {
+  if (!str) return null;
+  // supports "30th Apr 2026", "2026-04-30", "April 30 2026" etc.
+  str = str.trim();
+  // try native first
+  let d = new Date(str);
+  if (!isNaN(d)) return d;
+  // try ordinal: "30th Apr 2026"
+  const m = str.match(/(\d+)(?:st|nd|rd|th)?\s+([A-Za-z]+)\s+(\d{4})/);
+  if (m) { d = new Date(`${m[2]} ${m[1]} ${m[3]}`); if (!isNaN(d)) return d; }
+  return null;
+}
+
+function getLastRecallDate(row) {
+  // lastRecall field may have comma-separated dates — grab the last one
+  const allDates = row.subtopics.map(st => {
+    const parts = st.lastRecall ? st.lastRecall.split(',').map(s=>s.trim()).filter(Boolean) : [];
+    return parts.length ? parseDateStr(parts[parts.length - 1]) : null;
+  }).filter(Boolean);
+  if (!allDates.length) return null;
+  return allDates.reduce((a,b) => (a > b ? a : b));
+}
+
+function getDaysDue(st) {
+  // Returns how many days until due (negative = overdue)
+  const dates = st.lastRecall ? st.lastRecall.split(',').map(s => s.trim()).filter(Boolean) : [];
+  if (!dates.length) return -9999; // never studied = highest priority
+
+  const last = parseDateStr(dates[dates.length - 1]);
+  if (!last) return -9999;
+
+  const recall = st.recall || '';
+  let baseInterval = recall === 'Poor' ? 2
+                   : recall === 'OK'   ? 10
+                   : recall === 'Good' ? 28
+                   : 2;
+
+  // History multiplier: 3+ entries and OK/Good
+  if (dates.length >= 3 && (recall === 'OK' || recall === 'Good')) {
+    baseInterval = Math.round(baseInterval * 1.5);
+  }
+
+  const dueDate = new Date(last.getTime() + baseInterval * 86400000);
+  const now = new Date();
+  return Math.ceil((dueDate - now) / 86400000);
+}
+
+function yieldScore(y) {
+  return y === 'High' ? 3 : y === 'Medium' ? 2 : 1;
+}
+
+function recallScore(r) {
+  return r === 'Poor' ? 3 : r === 'OK' ? 2 : r === 'Good' ? 1 : 4; // blank = most urgent
+}
+
+function recallClass(r) {
+  return r === 'Poor' ? 'poor' : r === 'OK' ? 'ok' : r === 'Good' ? 'good' : 'blank';
+}
+
+// ════════════════════════════════════════════════════════
+//  PROGRESS MAP (Tab 1)
+// ════════════════════════════════════════════════════════
+function renderProgressMap() {
+  const container = document.getElementById('progress-map');
+  if (!db.length) { container.innerHTML = '<div class="empty-state">No data in tracker.</div>'; return; }
+
+  const grouped = {};
+  db.forEach(row => {
+    const p = row.parent || 'Uncategorised';
+    const s = row.sub    || 'General';
+    if (!grouped[p]) grouped[p] = {};
+    if (!grouped[p][s]) grouped[p][s] = [];
+    grouped[p][s].push(row);
+  });
+
+  let html = '';
+  Object.entries(grouped).forEach(([parent, subs]) => {
+    html += `<div class="parent-group">
+      <div class="parent-header open" onclick="toggleCollapse(this)">${parent}</div>
+      <div class="collapsible-content expanded">`;
+
+    Object.entries(subs).forEach(([sub, rows]) => {
+      html += `<div class="sub-group">
+        <div class="sub-header open" onclick="toggleCollapse(this)">${sub}</div>
+        <div class="collapsible-content expanded">`;
+
+      rows.forEach(row => {
+        html += `<div style="margin-left:12px; margin-bottom:4px; font-size:12px; color:var(--text-muted); font-family:var(--font-mono); padding-bottom:2px;">${row.topic}</div>
+        <div class="topic-chips">`;
+        row.subtopics.forEach(st => {
+          const rc = recallClass(st.recall);
+          html += `<div class="topic-chip"><span class="ind ind-${rc}"></span>${escHtml(st.name)}</div>`;
+        });
+        html += `</div>`;
+      });
+
+      html += `</div></div>`;
+    });
+
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleCollapse(header) {
+  header.classList.toggle('open');
+  const content = header.nextElementSibling;
+  if (content && content.classList.contains('collapsible-content')) {
+    content.classList.toggle('expanded');
+    content.classList.toggle('collapsed');
+  }
+}
+
+// ════════════════════════════════════════════════════════
+//  SESSION ALGORITHM (Tab 1)
+// ════════════════════════════════════════════════════════
+function runSessionAlgo(mode, btn) {
+  document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('selected'));
+  if (btn) btn.classList.add('selected');
+
+  // Collect all sub-topic units with metadata
+  let units = [];
+  db.forEach(row => {
+    row.subtopics.forEach(st => {
+      units.push({
+        topic:    row.topic,
+        parent:   row.parent,
+        sub:      row.sub,
+        stName:   st.name,
+        recall:   st.recall || '',
+        yield:    row.yield || 'Medium',
+        daysDue:  getDaysDue(st),
+        dates:    st.lastRecall ? st.lastRecall.split(',').filter(Boolean) : []
+      });
+    });
+  });
+
+  // Separate unseen from seen
+  const unseen = units.filter(u => !u.dates.length);
+  const seen   = units.filter(u => u.dates.length > 0);
+
+  // Sort seen by priority: overdue first, then yield, then weakest recall
+  seen.sort((a, b) => {
+    if (a.daysDue !== b.daysDue) return a.daysDue - b.daysDue;
+    if (yieldScore(b.yield) !== yieldScore(a.yield)) return yieldScore(b.yield) - yieldScore(a.yield);
+    return recallScore(b.recall) - recallScore(a.recall);
+  });
+
+  // Overdue only
+  const overdue = seen.filter(u => u.daysDue <= 0);
+
+  let maxItems, allocLabel, minMins, maxMins;
+  if (mode === 'long')  { maxItems = 3; allocLabel = '45–60 min'; minMins = 45; maxMins = 60; }
+  if (mode === 'mid')   { maxItems = 2; allocLabel = '25–40 min'; minMins = 25; maxMins = 40; }
+  if (mode === 'short') { maxItems = 4; allocLabel = '3–15 min';  minMins = 3;  maxMins = 15; }
+
+  let selected = [];
+
+  if (mode === 'short') {
+    // Prioritize foundations, drugs, unseen
+    const priority = units.filter(u =>
+      u.parent.toLowerCase().includes('found') ||
+      u.parent.toLowerCase().includes('drug') ||
+      u.stName.toLowerCase().includes('treatment') ||
+      u.stName.toLowerCase().includes('diagnostic')
+    );
+    // Fill with overdue, then unseen
+    const pool = [...new Set([...priority, ...overdue, ...unseen])];
+    selected = pool.slice(0, maxItems);
+  } else {
+    // High yield overdue first
+    const highOverdue = overdue.filter(u => u.yield === 'High');
+    selected = highOverdue.slice(0, Math.ceil(maxItems * 0.7));
+
+    // Blend in unseen
+    const remaining = maxItems - selected.length;
+    if (remaining > 0) {
+      const blended = [...seen.filter(u => !selected.includes(u)), ...unseen]
+        .filter(u => !selected.includes(u));
+      selected = [...selected, ...blended.slice(0, remaining)];
+    }
+    selected = selected.slice(0, maxItems);
+  }
+
+  if (!selected.length) {
+    document.getElementById('session-output').innerHTML =
+      '<div class="empty-state">No items match current filters. Add more entries to the tracker.</div>';
+    return;
+  }
+
+  let html = '';
+  selected.forEach((u, i) => {
+    const rc = recallClass(u.recall);
+    const badgeClass = u.dates.length ? `badge-${rc}` : 'badge-unseen';
+    const badgeText  = u.dates.length ? (u.recall || 'Blank') : 'Unseen';
+    const overdueTxt = u.dates.length && u.daysDue <= 0
+      ? `overdue ${Math.abs(u.daysDue)}d` : u.dates.length ? `due in ${u.daysDue}d` : 'never studied';
+
+    html += `<div class="session-item">
+      <div class="session-num">${String(i+1).padStart(2,'0')}</div>
+      <div class="session-detail">
+        <div class="session-topic">${escHtml(u.sub || u.topic)} — ${escHtml(u.stName)}</div>
+        <div class="session-meta">${escHtml(u.parent)} · ${overdueTxt} · ${allocLabel}/block</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+        <span class="session-badge ${badgeClass}">${badgeText}</span>
+        <span class="session-badge badge-high" style="${u.yield!=='High'?'opacity:0.35;':''}">${u.yield}</span>
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('session-output').innerHTML = html;
+}
+
+// ════════════════════════════════════════════════════════
+//  FLASHCARD ENGINE (Tab 1)
+// ════════════════════════════════════════════════════════
+function initDeck() {
+  const raw = document.getElementById('fc-input').value;
+  if (!raw.trim()) { alert('Paste some Q&A text first.'); return; }
+
+  flashDeck = parseFlashcards(raw);
+  flashIdx  = 0;
+  fcAnswerShown = false;
+
+  if (!flashDeck.length) {
+    document.getElementById('flashcard-area').innerHTML =
+      '<div class="empty-state">No Q&A pairs found. Check the format and try again.</div>';
+    return;
+  }
+
+  renderFlashcard();
+}
+
+function parseFlashcards(text) {
+  const cards = [];
+  let currentSection = '';
+
+  const lines = text.split('\n');
+  // Each pending card accumulates here until the next Q. or section header
+  let qText    = '';   // the question portion (up to and including "(N marks)")
+  let aLines   = [];   // answer lines collected so far
+  let hasQ     = false; // are we inside a Q block?
+
+  function isBulletLine(s) {
+    return /^[*\-•]/.test(s) || /^\d+[\.\)]\s/.test(s);
+  }
+
+  function isNewQuestion(s) {
+    return /^Q[\.\s]\s/.test(s);
+  }
+
+  function isSectionHeader(s) {
+    return s.length > 2 &&
+           !isNewQuestion(s) &&
+           !isBulletLine(s) &&
+           s === s.toUpperCase();
+  }
+
+  function commitCard() {
+    if (!hasQ || !qText.trim()) return;
+    const answer = aLines.join('\n').trim();
+    cards.push({ section: currentSection, question: qText.trim(), answer });
+    qText  = '';
+    aLines = [];
+    hasQ   = false;
+  }
+
+  lines.forEach(line => {
+    const trimmed = line.trim();
+
+    // ── Blank line ──────────────────────────────────────────────
+    // Only meaningful as a separator BETWEEN cards (i.e. when we have
+    // a complete Q+A already). If we are mid-answer (hasQ=true) and
+    // the answer is still empty, a blank line is just whitespace before
+    // the answer starts — do NOT flush, just skip.
+    if (!trimmed) {
+      if (hasQ && aLines.length > 0) {
+        // blank line after some answer content — safe separator, flush
+        commitCard();
+      }
+      // else: blank line before answer starts, or between blocks — ignore
+      return;
+    }
+
+    // ── Section header ───────────────────────────────────────────
+    if (isSectionHeader(trimmed)) {
+      commitCard();
+      currentSection = trimmed;
+      return;
+    }
+
+    // ── New question line ─────────────────────────────────────────
+    if (isNewQuestion(trimmed)) {
+      commitCard();
+      hasQ = true;
+      // Check if the marks bracket + answer are all on this same line
+      const marksMatch = trimmed.match(/^(Q[\s\S]+?\(\d+\s+marks?\))\s*([\s\S]*)$/i);
+      if (marksMatch) {
+        qText  = marksMatch[1].trim();
+        const inlineAnswer = marksMatch[2].trim();
+        aLines = inlineAnswer ? [inlineAnswer] : [];
+      } else {
+        // No marks bracket on this line yet — accumulate as question text
+        qText  = trimmed;
+        aLines = [];
+      }
+      return;
+    }
+
+    if (!hasQ) return; // orphan line before any Q — skip
+
+    // ── We are inside a Q block ──────────────────────────────────
+    // If qText doesn't have a marks bracket yet, this line is still
+    // part of the question (e.g. the question wrapped onto two lines)
+    const qHasMarks = /\(\d+\s+marks?\)/i.test(qText);
+
+    if (!qHasMarks) {
+      // Still building the question — check if marks appear on this line
+      const combined = qText + ' ' + trimmed;
+      const marksMatch = combined.match(/^(Q[\s\S]+?\(\d+\s+marks?\))\s*([\s\S]*)$/i);
+      if (marksMatch) {
+        qText  = marksMatch[1].trim();
+        const inlineAnswer = marksMatch[2].trim();
+        if (inlineAnswer) aLines.push(inlineAnswer);
+      } else {
+        qText = combined;
+      }
+      return;
+    }
+
+    // Marks bracket already found — everything from here is answer content
+    aLines.push(isBulletLine(trimmed) ? line.trimEnd() : trimmed);
+  });
+
+  commitCard();
+  return cards;
+}
+
+function renderFlashcard() {
+  const area = document.getElementById('flashcard-area');
+  if (!flashDeck.length) { area.innerHTML = ''; return; }
+
+  const card = flashDeck[flashIdx];
+  const pct  = ((flashIdx) / flashDeck.length * 100).toFixed(0);
+
+  area.innerHTML = `
+    <div class="fc-card">
+      <div class="fc-progress-bar"><div class="fc-progress-fill" style="width:${pct}%"></div></div>
+      <div class="fc-counter">${flashIdx + 1} / ${flashDeck.length}</div>
+      ${card.section ? `<div class="fc-section-tag">${escHtml(card.section)}</div>` : ''}
+      <div class="fc-question">${escHtml(card.question)}</div>
+      <div class="fc-answer" id="fc-ans">${escHtml(card.answer)}</div>
+      <div class="fc-controls">
+        <button class="btn-secondary" onclick="showAnswer()">Show Answer</button>
+        <button class="btn-ghost" onclick="nextCard()">Next Question →</button>
+        ${flashIdx > 0 ? '<button class="btn-ghost" onclick="prevCard()">← Prev</button>' : ''}
+      </div>
+    </div>`;
+}
+
+function showAnswer() {
+  const ans = document.getElementById('fc-ans');
+  if (ans) ans.classList.add('visible');
+}
+
+function nextCard() {
+  if (flashIdx < flashDeck.length - 1) {
+    flashIdx++;
+    renderFlashcard();
+  } else {
+    document.getElementById('flashcard-area').innerHTML =
+      '<div class="empty-state">Deck complete. Re-initialize to restart.</div>';
+  }
+}
+
+function prevCard() {
+  if (flashIdx > 0) { flashIdx--; renderFlashcard(); }
+}
+
+function clearDeck() {
+  flashDeck = [];
+  flashIdx  = 0;
+  document.getElementById('fc-input').value = '';
+  document.getElementById('flashcard-area').innerHTML = '';
+}
+
+// ════════════════════════════════════════════════════════
+//  STOPWATCH (Tab 2)
+// ════════════════════════════════════════════════════════
+function swStart() {
+  if (swRunning) return;
+  swRunning = true;
+  swStartTime = Date.now() - swAccum;
+  swInterval = setInterval(swTick, 500);
+  document.getElementById('sw-start').disabled = true;
+  document.getElementById('sw-pause').disabled = false;
+}
+
+function swPause() {
+  if (!swRunning) return;
+  swRunning = false;
+  swAccum = Date.now() - swStartTime;
+  clearInterval(swInterval);
+  document.getElementById('sw-start').disabled = false;
+  document.getElementById('sw-pause').disabled = true;
+}
+
+function swReset() {
+  swRunning = false;
+  clearInterval(swInterval);
+  swAccum = 0;
+  document.getElementById('sw-display').textContent = '00:00:00';
+  document.getElementById('sw-start').disabled = false;
+  document.getElementById('sw-pause').disabled = true;
+}
+
+function swTick() {
+  const elapsed = Date.now() - swStartTime;
+  const h = String(Math.floor(elapsed / 3600000)).padStart(2,'0');
+  const m = String(Math.floor((elapsed % 3600000) / 60000)).padStart(2,'0');
+  const s = String(Math.floor((elapsed % 60000) / 1000)).padStart(2,'0');
+  document.getElementById('sw-display').textContent = `${h}:${m}:${s}`;
+}
+
+function swPopulate() {
+  const elapsed = swAccum + (swRunning ? Date.now() - swStartTime : 0);
+  const mins = Math.round(elapsed / 60000);
+  if (mins > 0) document.getElementById('log-mins').value = mins;
+}
+
+// ════════════════════════════════════════════════════════
+//  TOPIC DROPDOWNS (Tab 2)
+// ════════════════════════════════════════════════════════
+function populateTopicDropdown() {
+  const sel = document.getElementById('log-topic');
+  const cur = sel.value;
+  // Build display label as "Subcategory (Parent)" or just sub if unique
+  const labels = db.map((r, i) => {
+    const label = r.sub ? (r.parent ? r.sub + ' — ' + r.parent : r.sub) : ('Row ' + (i+1));
+    return { label, idx: i };
+  });
+  sel.innerHTML = '<option value="">— select topic —</option>' +
+    labels.map(l => `<option value="${l.idx}" ${String(l.idx)===cur?'selected':''}>${escHtml(l.label)}</option>`).join('');
+  if (cur !== '') populateSubTopics();
+}
+
+function populateSubTopics() {
+  const idxStr = document.getElementById('log-topic').value;
+  const sel    = document.getElementById('log-subtopic');
+  if (idxStr === '') { sel.innerHTML = '<option value="">— select sub-topic —</option>'; return; }
+  const row = db[parseInt(idxStr)];
+  if (!row) { sel.innerHTML = '<option value="">— select sub-topic —</option>'; return; }
+  sel.innerHTML = '<option value="">— select sub-topic —</option>' +
+    row.subtopics.map(st => `<option value="${escAttr(st.name)}">${escHtml(st.name)}</option>`).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  LOG BLOCK (Tab 2)
+// ════════════════════════════════════════════════════════
+function logBlock() {
+  const topic    = document.getElementById('log-topic').value;
+  const subtopic = document.getElementById('log-subtopic').value;
+  const mins     = parseInt(document.getElementById('log-mins').value) || 0;
+  const recall   = document.getElementById('log-recall').value;
+
+  if (!topic || !subtopic)   { alert('Please select a topic and sub-topic.'); return; }
+  if (!recall)               { alert('Please select a recall level.'); return; }
+  if (mins < 1)              { alert('Please enter minutes studied.'); return; }
+
+  // Update DB
+  const rowIdx = parseInt(document.getElementById('log-topic').value);
+  const row = isNaN(rowIdx) ? null : db[rowIdx];
+  if (row) {
+    const st = row.subtopics.find(s => s.name === subtopic);
+    if (st) {
+      const dateLabel = formatDateLabel(new Date());
+      st.lastRecall = st.lastRecall
+        ? st.lastRecall + ', ' + dateLabel
+        : dateLabel;
+      st.recall = recall;
+      st.mins   = (st.mins || 0) + mins;
+    }
+  }
+
+  // Log to timeline
+  const now = new Date();
+  todayLog.push({ time: fmtTime(now), topic: row ? (row.sub || row.topic || topic) : topic, subtopic, mins, recall });
+
+  // Update daily history
+  const td = todayStr();
+  dailyHistory[td] = (dailyHistory[td] || 0) + mins;
+
+  // Save everything
+  saveData();
+  updateStreak();
+
+  // Re-render
+  renderTimeline();
+  renderSparkline();
+  renderProgressMap();
+  renderDB();
+  renderStreakBadge();
+
+  // Clear form
+  document.getElementById('log-mins').value   = '';
+  document.getElementById('log-recall').value = '';
+  document.getElementById('log-subtopic').value = '';
+}
+
+function formatDateLabel(d) {
+  const day = d.getDate();
+  const suffix = ['th','st','nd','rd'][(day % 10 > 3 || Math.floor(day/10) === 1) ? 0 : day % 10] || 'th';
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${day}${suffix} ${months[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+function renderTimeline() {
+  const list = document.getElementById('timeline-list');
+  const today = todayStr();
+
+  // Today's entries
+  const entries = todayLog.slice().reverse();
+
+  if (!entries.length) {
+    list.innerHTML = '<div class="empty-state">No blocks logged today.</div>';
+  } else {
+    list.innerHTML = entries.map(e => `
+      <div class="timeline-item">
+        <div class="timeline-time">${e.time}</div>
+        <div class="timeline-detail">${escHtml(e.topic || e.sub || "")} (${escHtml(e.subtopic)})</div>
+        <div class="timeline-mins">${e.mins} min</div>
+      </div>`).join('');
+  }
+
+  // Update metrics
+  const totalMins   = todayLog.reduce((a,b) => a + (b.mins||0), 0);
+  const totalBlocks = todayLog.length;
+  document.getElementById('metric-mins').textContent   = totalMins;
+  document.getElementById('metric-hours').textContent  = (totalMins / 60).toFixed(1);
+  document.getElementById('metric-blocks').textContent = totalBlocks;
+}
+
+function renderSparkline() {
+  const barsEl   = document.getElementById('sparkline-bars');
+  const labelsEl = document.getElementById('sparkline-labels');
+  if (!barsEl || !labelsEl) return;
+
+  const days = 14;
+  const today = new Date();
+  const data  = [];
+
+  for (let i = days - 1; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    const mins = (key === todayStr())
+      ? todayLog.reduce((a,b) => a + (b.mins||0), 0)
+      : (dailyHistory[key] || 0);
+    const label = (d.getDate()) + '/' + (d.getMonth()+1);
+    data.push({ label, mins });
+  }
+
+  const maxVal = Math.max(...data.map(d => d.mins), 1);
+
+  barsEl.innerHTML = data.map(d => {
+    const pct = Math.max((d.mins / maxVal) * 52, d.mins > 0 ? 4 : 0);
+    return `<div class="spark-col">
+      <div class="spark-bar" style="height:${pct}px;" title="${d.mins} min"></div>
+    </div>`;
+  }).join('');
+
+  labelsEl.innerHTML = data.map((d,i) => {
+    const show = i === 0 || i === 6 || i === 13;
+    return `<div class="spark-col"><div class="spark-label" style="opacity:${show?1:0}">${d.label}</div></div>`;
+  }).join('');
+}
+
+// ════════════════════════════════════════════════════════
+//  STREAK
+// ════════════════════════════════════════════════════════
+function updateStreak() {
+  const today = todayStr();
+  let streak = parseInt(localStorage.getItem(STREAK_KEY) || '0');
+  const lastDay = localStorage.getItem('derm_srs_last_streak_day') || '';
+
+  if (lastDay === today) return;
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate() - 1);
+  const yStr = yesterday.toISOString().slice(0, 10);
+
+  if (lastDay === yStr) {
+    streak++;
+  } else if (!lastDay) {
+    streak = 1;
+  } else {
+    streak = 1; // reset
+  }
+  localStorage.setItem(STREAK_KEY, streak);
+  localStorage.setItem('derm_srs_last_streak_day', today);
+}
+
+function renderStreakBadge() {
+  const streak = parseInt(localStorage.getItem(STREAK_KEY) || '0');
+  const badge  = document.getElementById('streak-badge');
+  if (streak > 0) badge.textContent = `${streak}d streak`;
+  else badge.textContent = '— streak';
+}
+
+// ════════════════════════════════════════════════════════
+//  DATABASE RENDER (Tab 3)
+// ════════════════════════════════════════════════════════
+function renderDB() {
+  const tbody = document.getElementById('db-body');
+  if (!db.length) { tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state">No rows yet.</div></td></tr>'; return; }
+
+  tbody.innerHTML = db.map((row, ri) => renderRow(row, ri)).join('');
+}
+
+function renderRow(row, ri) {
+  const isFirst = ri === 0;
+  const isLast  = ri === db.length - 1;
+
+  return `<tr id="row-${ri}">
+    <td class="move-cell">
+      <button class="btn-move" onclick="moveRow(${ri},-1)" ${isFirst ? 'disabled' : ''} title="Move up">▲</button>
+      <button class="btn-move" onclick="moveRow(${ri}, 1)" ${isLast  ? 'disabled' : ''} title="Move down">▼</button>
+    </td>
+    <td><input value="${escAttr(row.parent)}" oninput="db[${ri}].parent=this.value" placeholder="Parent category"></td>
+    <td><input value="${escAttr(row.sub)}" oninput="db[${ri}].sub=this.value" placeholder="Subcategory"></td>
+    <td>${renderSubtopics(row, ri)}</td>
+    <td>
+      <div style="font-size:13px;color:var(--text-muted);font-family:var(--font-mono);">
+        ${row.subtopics.map((st,si) => `<div style="margin-bottom:2px;">
+          <span style="color:var(--text-muted)">${escHtml(st.name)}:</span>
+          <input value="${escAttr(st.lastRecall)}" oninput="db[${ri}].subtopics[${si}].lastRecall=this.value"
+            style="width:118px;font-size:13px;padding:1px 4px;" placeholder="insert date">
+        </div>`).join('')}
+      </div>
+    </td>
+    <td>
+      ${row.subtopics.map((st,si) => `
+        <select class="recall-select ${recallClass(st.recall)}" onchange="setRecall(${ri},${si},this.value)">
+          <option value="" ${!st.recall?'selected':''}>—</option>
+          <option value="Poor"  ${st.recall==='Poor'?'selected':''}>Poor</option>
+          <option value="OK"    ${st.recall==='OK'?'selected':''}>OK</option>
+          <option value="Good"  ${st.recall==='Good'?'selected':''}>Good</option>
+        </select>
+      `).join('')}
+    </td>
+    <td>
+      <select class="yield-select" onchange="db[${ri}].yield=this.value">
+        <option value="High"   ${(row.yield||'High')==='High'?'selected':''}>High</option>
+        <option value="Medium" ${row.yield==='Medium'?'selected':''}>Medium</option>
+        <option value="Low"    ${row.yield==='Low'?'selected':''}>Low</option>
+      </select>
+    </td>
+    <td>
+      <button class="btn-ghost" style="font-size:13px;padding:3px 8px;color:var(--red-soft);"
+        onclick="deleteRow(${ri})">✕</button>
+    </td>
+  </tr>`;
+}
+
+function renderSubtopics(row, ri) {
+  let html = '<div class="subtopic-list">';
+  row.subtopics.forEach((st, si) => {
+    html += `<div class="subtopic-tag">
+      ${escHtml(st.name)}
+      <button class="subtopic-del" onclick="promptDeleteST(${ri},${si})" title="Remove sub-topic">✕</button>
+    </div>`;
+  });
+  html += `<button class="subtopic-add" onclick="addSubtopic(${ri})">+ add</button></div>`;
+  return html;
+}
+
+function setRecall(ri, si, val) {
+  db[ri].subtopics[si].recall = val;
+  const sel = document.querySelectorAll(`#row-${ri} .recall-select`)[si];
+  if (sel) sel.className = `recall-select ${recallClass(val)}`;
+}
+
+function addSubtopic(ri) {
+  const name = prompt('New sub-topic name:');
+  if (!name || !name.trim()) return;
+  db[ri].subtopics.push({ name: name.trim(), lastRecall: '', recall: '', mins: 0 });
+  renderDB();
+  populateTopicDropdown();
+}
+
+function deleteRow(ri) {
+  if (!confirm('Delete this entire row?')) return;
+  db.splice(ri, 1);
+  renderDB();
+  populateTopicDropdown();
+}
+
+function moveRow(ri, dir) {
+  const newIdx = ri + dir;
+  if (newIdx < 0 || newIdx >= db.length) return;
+  const tmp = db[ri];
+  db[ri]     = db[newIdx];
+  db[newIdx] = tmp;
+  renderDB();
+  // Smoothly scroll the moved row into view
+  const el = document.getElementById('row-' + newIdx);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function addRow() {
+  db.push({
+    parent: '', sub: '', topic: '',
+    subtopics: [{ name: 'Core features', lastRecall: '', recall: '', mins: 0 }],
+    yield: 'High'
+  });
+  renderDB();
+  populateTopicDropdown();
+  // Scroll to bottom
+  document.getElementById('db-body').lastElementChild?.scrollIntoView({ behavior: 'smooth' });
+}
+
+// ════════════════════════════════════════════════════════
+//  DELETE SUBTOPIC MODAL
+// ════════════════════════════════════════════════════════
+function promptDeleteST(ri, si) {
+  const row = db[ri];
+  if (row.subtopics.length <= 1) {
+    alert('Cannot delete the only sub-topic. Delete the entire row instead.');
+    return;
+  }
+
+  modalRowIdx = ri;
+  modalStIdx  = si;
+  modalOptSel = null;
+
+  const st = row.subtopics[si];
+  document.getElementById('modal-body').textContent =
+    `You are about to delete "${st.name}" from "${row.topic}".`;
+
+  // Populate merge dropdown
+  const mergeTarget = document.getElementById('modal-merge-target');
+  const others = row.subtopics.filter((_, i) => i !== si);
+  mergeTarget.innerHTML = '<option value="">— select destination —</option>' +
+    others.map(o => `<option value="${escAttr(o.name)}">${escHtml(o.name)}</option>`).join('');
+  mergeTarget.style.display = 'none';
+
+  document.getElementById('modal-opt-a').classList.remove('selected');
+  document.getElementById('modal-opt-b').classList.remove('selected');
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function modalSelectOpt(opt) {
+  modalOptSel = opt;
+  document.getElementById('modal-opt-a').classList.toggle('selected', opt === 'A');
+  document.getElementById('modal-opt-b').classList.toggle('selected', opt === 'B');
+  document.getElementById('modal-merge-target').style.display = opt === 'B' ? 'block' : 'none';
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+  modalRowIdx = null; modalStIdx = null; modalOptSel = null;
+}
+
+function confirmDelete() {
+  if (modalOptSel === null) { alert('Please select Option A or Option B.'); return; }
+
+  const row = db[modalRowIdx];
+  const src = row.subtopics[modalStIdx];
+
+  if (modalOptSel === 'B') {
+    const destName = document.getElementById('modal-merge-target').value;
+    if (!destName) { alert('Please select a destination sub-topic.'); return; }
+    const dest = row.subtopics.find(s => s.name === destName);
+    if (dest) {
+      // Merge date lists
+      const srcDates  = src.lastRecall  ? src.lastRecall.split(',').map(s=>s.trim()).filter(Boolean)  : [];
+      const destDates = dest.lastRecall ? dest.lastRecall.split(',').map(s=>s.trim()).filter(Boolean) : [];
+      dest.lastRecall = [...destDates, ...srcDates].join(', ');
+      dest.mins = (dest.mins || 0) + (src.mins || 0);
+    }
+  }
+
+  row.subtopics.splice(modalStIdx, 1);
+  closeModal();
+  renderDB();
+  renderProgressMap();
+  saveData();
+}
+
+// ════════════════════════════════════════════════════════
+//  RENDER HELPERS
+// ════════════════════════════════════════════════════════
+function renderAll() {
+  renderDB();
+  renderProgressMap();
+  populateTopicDropdown();
+  renderTimeline();
+  renderSparkline();
+  renderStreakBadge();
+}
+
+function escHtml(s) {
+  return String(s || '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+function escAttr(s) {
+  return String(s || '').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// ════════════════════════════════════════════════════════
+//  BACKUP BANNER
+// ════════════════════════════════════════════════════════
+function checkBackupBanner() {
+  const last = localStorage.getItem('derm_srs_last_backup');
+  const dismissed = localStorage.getItem('derm_srs_banner_dismissed');
+  const now = Date.now();
+  const TWO_WEEKS = 14 * 24 * 60 * 60 * 1000;
+
+  // Show banner if: never exported, or last export > 2 weeks ago
+  // Reset dismiss if last backup was recent (new cycle)
+  if (!last || (now - parseInt(last)) > TWO_WEEKS) {
+    // Check if user dismissed in current cycle (within last 24h)
+    const dismissedRecently = dismissed && (now - parseInt(dismissed)) < 86400000;
+    if (!dismissedRecently) {
+      showBanner();
+    }
+  }
+}
+
+function showBanner() {
+  const b = document.getElementById('backup-banner');
+  if (b) b.style.display = 'block';
+}
+
+function hideBanner() {
+  const b = document.getElementById('backup-banner');
+  if (b) b.style.display = 'none';
+}
+
+function dismissBanner() {
+  hideBanner();
+  localStorage.setItem('derm_srs_banner_dismissed', Date.now().toString());
+}
+
+// ════════════════════════════════════════════════════════
+//  BOOT
+// ════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => { init(); checkBackupBanner(); });
+</script>
+</body>
+</html>
